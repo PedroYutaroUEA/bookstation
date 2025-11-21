@@ -1,6 +1,5 @@
 import requests
 import streamlit as st
-import numpy as np
 
 # Mantenha a URL base configurável
 BASE_URL = "http://127.0.0.1:8000"
@@ -17,7 +16,7 @@ def fetch_catalog_metadata():
         # Fallback para o caso de o backend não estar rodando
         st.error(f"Erro ao buscar metadados do catálogo: {e}. Usando dados simulados.")
         return {
-            "genres": [
+            "categories": [
                 "Fiction",
                 "Fantasy",
                 "Science Fiction",
@@ -47,17 +46,17 @@ class ApiService:
             st.session_state.catalog_data = fetch_catalog_metadata()
             st.session_state.initialized = True
 
-    def simulate_user_api(self, genres, price_range):
+    def simulate_user_api(self, categories, price_range):
         """Cria/Simula um novo usuário para o cold start."""
         try:
             response = requests.post(
                 f"{self.base_url}/simulate",
                 json={
-                    "genres": genres,
+                    "categories": categories,
                     "price_min": price_range[0],
                     "price_max": price_range[1],
                 },
-                timeout=10,
+                timeout=90,
             )
             response.raise_for_status()
             return response.json().get("user_id")
@@ -71,7 +70,7 @@ class ApiService:
             response = requests.get(
                 f"{self.base_url}/recomendar",
                 params={"user_id": user_id, "n": n},
-                timeout=30,
+                timeout=90,
             )
             response.raise_for_status()
             return response.json().get("recommendations", [])
@@ -85,7 +84,7 @@ class ApiService:
             response = requests.get(
                 f"{self.base_url}/metrics",
                 params={"user_id": user_id, "n": n},
-                timeout=60,
+                timeout=90,
             )
             response.raise_for_status()
             return response.json()
@@ -99,7 +98,7 @@ class ApiService:
             response = requests.post(
                 f"{self.base_url}/rate",
                 json={"user_id": user_id, "item_id": item_id, "rating": rating},
-                timeout=10,
+                timeout=90,
             )
             response.raise_for_status()
             return True

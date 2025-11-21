@@ -1,7 +1,6 @@
+from pages import PAGE_1
 import streamlit as st
-import numpy as np
 from api_service import ApiService
-import pandas as pd
 from PIL import Image
 
 # -------------------------------------------------------------
@@ -96,4 +95,4 @@ else:
 
 st.sidebar.divider()
 if st.sidebar.button("Voltar para Recomendações"):
-    st.switch_page("pages/1_Simulacao_Recomendacao.py")
+    st.switch_page(f"pages/{PAGE_1}")

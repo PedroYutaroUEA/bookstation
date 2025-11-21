@@ -23,9 +23,9 @@ def get_metadata():
     return book_controller.get_metadata()
 
 
-@router.get("/genres")
-def get_genres():
-    return book_controller.get_all_genres()
+@router.get("/categories")
+def get_categories():
+    return book_controller.get_all_categories()
 
 
 # --- Rotas de Ação/Recomendação ---
