@@ -2,6 +2,6 @@ from pydantic import BaseModel
 
 
 class SimulateRequest(BaseModel):
-    genres: list
+    categories: list
     price_min: float
     price_max: float

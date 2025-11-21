@@ -6,7 +6,7 @@ class RecommendationController:
 
     def get_recommendations(self, user_id: int, n: int, service: RecommendationService):
         # Verifica se o usuário existe, se não, cria um perfil zero
-        return service.recommend_items(user_id)
+        return {"recommendations": service.recommend_items(user_id)}
 
     def get_metrics(self, user_id: int, n: int, service: RecommendationService):
         # Lógica de controle: Chama o Service para o cálculo de métricas

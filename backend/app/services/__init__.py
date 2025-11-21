@@ -24,7 +24,8 @@ class RecommendationService:
         # 1. Pré-processamento: Cria uma string de conteúdo para vetorização
         # Usamos descrição e gênero
         self.books["content"] = self.books.apply(
-            lambda row: f"{row['description']} {row['genero']} {row['author']}", axis=1
+            lambda row: f"{row['description']} {row['category']} {row['authors']}",
+            axis=1,
         ).fillna("")
 
         # 2. Vetorização TF-IDF
@@ -38,9 +39,9 @@ class RecommendationService:
         Constrói o vetor de perfil do usuário a partir da média dos vetores dos itens que ele gostou.
         Se o usuário for novo, retorna um vetor vazio (zero).
         """
-        # Assumimos que 'nota' 1 = Gosto
+        # Assumimos que 'rating' 1 = Gosto
         liked_items_ids = self.ratings[
-            (self.ratings["usuario_id"] == user_id) & (self.ratings["nota"] == 1)
+            (self.ratings["user_id"] == user_id) & (self.ratings["rating"] == 1)
         ]["item_id"].unique()
 
         if len(liked_items_ids) == 0:
@@ -62,13 +63,13 @@ class RecommendationService:
         return user_profile_vector
 
     def get_initial_recommendations(
-        self, genres: list, price_min: float, price_max: float
+        self, categories: list, price_min: float, price_max: float
     ) -> list:
         """Gera recomendações baseadas nos atributos iniciais do Cold Start."""
 
         # Filtro de conteúdo baseado em metadados puros
         filtered_books = self.books[
-            (self.books["genero"].isin(genres))
+            (self.books["category"].isin(categories))
             & (self.books["price"] >= price_min)
             & (self.books["price"] <= price_max)
         ]
@@ -114,9 +115,7 @@ class RecommendationService:
         )
 
         # Filtrar itens já avaliados (para não recomendar o que o usuário já viu)
-        liked_ids = self.ratings[self.ratings["usuario_id"] == user_id][
-            "item_id"
-        ].unique()
+        liked_ids = self.ratings[self.ratings["user_id"] == user_id]["item_id"].unique()
 
         # Mapeia de volta para o catálogo original e ranqueia
         recommended_indices = scores_df.sort_values(by="score", ascending=False)[
@@ -141,9 +140,9 @@ class RecommendationService:
         """
 
         # 1. GABARITO (True Positives): O que o usuário realmente gostou
-        # Baseado em todas as avaliações positivas (nota=1) no dataset de avaliação
+        # Baseado em todas as avaliações positivas (rating=1) no dataset de avaliação
         actual_likes_df = self.ratings[
-            (self.ratings["usuario_id"] == user_id) & (self.ratings["nota"] == 1)
+            (self.ratings["user_id"] == user_id) & (self.ratings["rating"] == 1)
         ]
         actual_likes_ids = actual_likes_df["item_id"].unique()
 

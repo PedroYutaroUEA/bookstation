@@ -9,11 +9,11 @@ class UserController:
         # NOTA: O FBC não precisa de um novo ID de usuário, mas sim de um perfil temporário.
         # Aqui, apenas retornamos um novo ID (o próximo do ratings) para simulação.
         ratings = load_ratings()
-        new_id = ratings["usuario_id"].max() + 1 if not ratings.empty else 1
+        new_id = ratings["user_id"].max() + 1 if not ratings.empty else 1
 
         # Lógica de Cold Start: Retorna livros filtrados pelos atributos iniciais
         recommendations = service.get_initial_recommendations(
-            body.genres, body.price_min, body.price_max
+            body.categories, body.price_min, body.price_max
         )
 
         # Para a demonstração, o backend retornará as recomendações iniciais diretamente

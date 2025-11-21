@@ -1,77 +1,107 @@
+from pages import PAGE_2
 import streamlit as st
-import pandas as pd
 from api_service import ApiService, fetch_catalog_metadata
-import os
+from PIL import Image
 
 # -------------------------------------------------------------
-# INJEÇÃO DE TEMA E CONFIGURAÇÃO
+# TEMA PADRÃO (BRANCO + VERMELHO)
 # -------------------------------------------------------------
-# Replicar as cores do projeto anterior para consistência
-BACKGROUND_COLOR = "#f4f4f2"
-HEADER_COLOR = "#e8e8e8"
-ASIDE = "#bbbfca"
-TEXT_COLOR = "#050608"
-PRIMARY_COLOR = "#38761d"
-SECONDARY_BACKGROUND = "#4d2800"
+
+BACKGROUND_COLOR = "#ffffff"  # branco
+SECONDARY_BACKGROUND = "#9e9e9e"  # branco
+TEXT_COLOR = "#1a1a1a"  # quase preto
+PRIMARY_RED = "#d90429"  # vermelho principal
+PRIMARY_COLOR = "#6e04d9"
+SIDEBAR_BG = "#f5f5f5"  # sidebar branca
+SIDEBAR_HIGHLIGHT = "#ef233c"  # vermelho hover
 
 st.set_page_config(
-    page_title="Bookstation - Recomendação",
+    page_title="Bookstation - Recomendações",
     layout="wide",
 )
 
 st.markdown(
     f"""
     <style>
-    .stApp {{ background-color: {BACKGROUND_COLOR}; color: {TEXT_COLOR}; }}
-    [data-testid="stSidebar"] {{ background-color: {ASIDE}; }}
-    .stButton>button {{ background-color: {PRIMARY_COLOR} !important; border-color: {PRIMARY_COLOR} !important; color: white !important; }}
-    .stAppToolbar {{ background-color: {HEADER_COLOR}; }}
-    
-    /* Fundo dos widgets de entrada */
-    [data-testid="stForm"], 
-    [data-testid^="stWidget"] > div {{
-        background-color: {SECONDARY_BACKGROUND};
+    .stApp {{
+        background-color: {BACKGROUND_COLOR};
+        color: {TEXT_COLOR};
     }}
-    /* Cor do texto nos widgets */
-    .stMultiSelect, .stSlider > div {{
+    /* Sidebar */
+    [data-testid="stSidebar"] {{
+        background-color: {SIDEBAR_BG};
+    }}
+
+    [data-testid="stSidebarNavItems"] * {{
+        color: {TEXT_COLOR};
+    }}
+
+    [data-testid="stSidebarNavLink"] {{
+        background-color: transparent;
+        border-radius: 6px;
+        padding: 6px;
+    }}
+
+    [data-testid="stSidebarNavLink"]:hover {{
+        background-color: {SIDEBAR_HIGHLIGHT}33;
+    }}
+    [data-testid="stSidebarNavLink"]:hover {{
+        background-color: {SIDEBAR_HIGHLIGHT}33;
+    }}
+    .stButton>button {{
+        background-color: {PRIMARY_RED} !important;
         color: white !important;
+        border-radius: 6px !important;
     }}
-    /* Títulos e texto principal */
-    h1, h2, h3, h4, .stMarkdown, .stText {{ color: {TEXT_COLOR} !important; }}
+    h1, h2, h3, h4 {{
+        color: {PRIMARY_RED};
+    }}
+    hr {{
+        border-top: 2px solid {PRIMARY_RED};
+    }}
     </style>
     """,
     unsafe_allow_html=True,
 )
+
+# -------------------------------------------------------------
+# LOGO
+# -------------------------------------------------------------
+logo_path = "logo.png"
+try:
+    st.image(Image.open(logo_path), width=400)
+except:
+    st.warning("⚠️ Não foi possível carregar a logo. Verifique o caminho.")
+
+# -------------------------------------------------------------
+# LÓGICA DA PÁGINA
 # -------------------------------------------------------------
 
 service = ApiService()
-N_RECOMMEND = 30  # Número fixo de recomendações, conforme o requisito
+N_RECOMMEND = 30
 
+# Título
 st.title("📚 Bookstation: Encontre sua Próxima Leitura")
+st.markdown("---")
 
 catalog_metadata = fetch_catalog_metadata()
-available_genres = catalog_metadata.get("genres", [])
+available_categories = catalog_metadata.get("categories", [])
 price_min, price_max = catalog_metadata.get("price_range", [10, 100])
 
-# --- 1. Cold Start: Simulação Inicial ---
-
+# --- 1. Simulação Inicial (Cold Start) ---
 if st.session_state.user_id is None:
     st.header("1. Simulação Inicial (Cold Start)")
-    st.info(
-        "Para gerar seu perfil inicial, selecione seus gostos. Nenhuma avaliação de usuário é usada neste cálculo."
-    )
+    st.info("Selecione características iniciais do seu gosto para gerarmos seu perfil.")
 
     with st.form("cold_start_form"):
         st.subheader("Seus Interesses")
 
-        # Seleção de Gêneros
-        selected_genres = st.multiselect(
-            "Quais categorias de livros você costuma ler?",
-            options=available_genres,
-            default=available_genres[:2] if available_genres else [],
+        selected_categories = st.multiselect(
+            "Categorias preferidas:",
+            options=available_categories,
+            default=available_categories[:2],
         )
 
-        # Faixa de Preço
         selected_price_range = st.slider(
             "Faixa de Preço (R$):",
             min_value=float(price_min),
@@ -83,42 +113,35 @@ if st.session_state.user_id is None:
         submitted = st.form_submit_button("Gerar Perfil e Recomendações")
 
         if submitted:
-            if not selected_genres:
-                st.warning("Por favor, selecione pelo menos um gênero.")
+            if not selected_categories:
+                st.warning("Selecione ao menos um gênero.")
             else:
-                with st.spinner("Criando perfil de conteúdo..."):
+                with st.spinner("Criando perfil..."):
                     new_user_id = service.simulate_user_api(
-                        selected_genres, selected_price_range
+                        selected_categories, selected_price_range
                     )
                     if new_user_id is not None:
                         st.session_state.user_id = new_user_id
                         st.session_state.recommendations = (
                             service.fetch_recommendations(new_user_id, N_RECOMMEND)
                         )
-                        st.success(
-                            f"Perfil criado com sucesso (User ID: {new_user_id})."
-                        )
+                        st.success(f"Perfil criado! ID: {new_user_id}")
                         st.rerun()
 
-# --- 2. Interação e Catálogo ---
-
+# --- 2. Recomendações ---
 if st.session_state.user_id is not None:
     current_user = st.session_state.user_id
-    st.sidebar.success(f"Perfil Ativo: Usuário ID **{current_user}**")
+    st.sidebar.success(f"Usuário Ativo: **{current_user}**")
 
     st.header(f"2. Recomendações de Livros ({N_RECOMMEND} itens)")
-    st.info(
-        "As recomendações são baseadas no seu perfil de conteúdo. Avalie os livros para refinar seu perfil."
-    )
+    st.info("Avalie os livros para melhorar suas recomendações!")
 
-    # Botão de atualização
-    if st.button("🔄 Atualizar Recomendações (Com novo perfil)"):
+    if st.button("🔄 Atualizar Recomendações"):
         st.session_state.recommendations = service.fetch_recommendations(
             current_user, N_RECOMMEND
         )
-        st.experimental_rerun()
+        st.rerun()
 
-    # Exibição do Catálogo em Grid
     recs = st.session_state.recommendations
 
     if recs:
@@ -177,4 +200,4 @@ if st.sidebar.button("Limpar Perfil e Iniciar Novo"):
     service.clear_session()
 
 if st.sidebar.button("Ir para Avaliação de Métricas"):
-    st.switch_page("pages/2_Avaliacao_Metricas.py")
+    st.switch_page(f"pages/{PAGE_2}")

@@ -1,76 +1,98 @@
 import streamlit as st
 
-# --- Configuração do Tema Global (SOUNDFOREST) ---
-# O mesmo CSS que você injetou em outras páginas pode ser colocado aqui
-# para garantir que o tema seja aplicado universalmente.
-
+# --------------------------------------------
+# CONFIGURAÇÃO DA PÁGINA
+# --------------------------------------------
 st.set_page_config(
     page_title="BOOKSTATION - Recomendações de Livros",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# Cores do tema (Marrom Escuro e Verde Floresta)
+# --------------------------------------------
+# CORES DO TEMA (Branco + Vermelho)
+# --------------------------------------------
+BACKGROUND_COLOR = "#ffffff"     # fundo branco
+TEXT_COLOR = "#1a1a1a"           # texto quase preto
+PRIMARY_RED = "#d90429"          # vermelho forte
+SIDEBAR_BG = "#f5f5f5"           # sidebar branco gelo
+SIDEBAR_HIGHLIGHT = "#ef233c"    # vermelho mais vivo
 
-BACKGROUND_COLOR = "#a2a29d"
-HEADER_COLOR = "#e8e8e8"
-ASIDE = "#828693"
-TEXT_COLOR = "#050608"
-ASIDE_BUTTON_HOVER = "#495464"
-ASIDE_BUTTON_COLOR = "#495464AC"
-PRIMARY_COLOR = "#38761d"
-SECONDARY_BACKGROUND = "#4d2800"
 
+# --------------------------------------------
+# CSS Global
+# --------------------------------------------
 st.markdown(
     f"""
     <style>
-    /* ---------------------- CORES DE FUNDO GERAIS ---------------------- */
+
+    /* Fundo geral */
     .stApp {{
         background-color: {BACKGROUND_COLOR};
         color: {TEXT_COLOR};
     }}
+
+    /* Sidebar */
     [data-testid="stSidebar"] {{
-        background-color: {ASIDE};
+        background-color: {SIDEBAR_BG};
     }}
+
     [data-testid="stSidebarNavItems"] * {{
-        color: {HEADER_COLOR};
+        color: {TEXT_COLOR};
     }}
+
     [data-testid="stSidebarNavLink"] {{
-        background-color: {ASIDE_BUTTON_COLOR};
+        background-color: transparent;
+        border-radius: 6px;
+        padding: 6px;
     }}
+
     [data-testid="stSidebarNavLink"]:hover {{
-        background-color: {ASIDE_BUTTON_HOVER};
+        background-color: {SIDEBAR_HIGHLIGHT}33;
     }}
-    /* Cor dos botões e sliders (Verde Floresta) */
+
+    /* Botões */
     .stButton>button {{
-        background-color: {PRIMARY_COLOR} !important;
-        border-color: {PRIMARY_COLOR} !important;
+        background-color: {PRIMARY_RED} !important;
         color: white !important;
+        border-radius: 6px !important;
+        border: none !important;
     }}
-    /*app header*/
-    .stAppToolbar {{
-      background-color: {HEADER_COLOR};
+
+    .stButton>button:hover {{
+        background-color: {SIDEBAR_HIGHLIGHT} !important;
     }}
-    /* Fundo dos widgets de entrada */
-    [data-testid="stForm"], 
-    [data-testid^="stWidget"] > div {{
-        background-color: {SECONDARY_BACKGROUND};
+
+    /* Headers */
+    h1, h2, h3 {{
+        color: {PRIMARY_RED};
     }}
+
+    /* Linhas divisórias */
+    hr {{
+        border-top: 2px solid {PRIMARY_RED};
+    }}
+
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# --- Conteúdo da Página Principal ---
+# --------------------------------------------
+# LOGO NO TOPO DA PÁGINA
+# --------------------------------------------
+st.image("logo.png", width=400)
 
+# --------------------------------------------
+# CONTEÚDO PRINCIPAL
+# --------------------------------------------
 st.title("Bem-vindo ao BOOKSTATION 📚")
 st.markdown("---")
+
 st.markdown(
     """
-Este sistema utiliza uma abordagem baeada em similaridade de conteúdo para recomendar livros.
+O **BookStation** utiliza uma abordagem baseada em *similaridade de conteúdo* para recomendar livros.
 
 Para começar, selecione a página **Simulação e Recomendações** na barra lateral.
 """
 )
-
-# Se você quiser, pode exibir o logo aqui também.
