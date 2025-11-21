@@ -44,14 +44,6 @@ st.markdown(
     [data-testid="stSidebarNavLink"]:hover {{
         background-color: {SIDEBAR_HIGHLIGHT}33;
     }}
-    [data-testid="stSidebarNavLink"]:hover {{
-        background-color: {SIDEBAR_HIGHLIGHT}33;
-    }}
-    .stButton>button {{
-        background-color: {PRIMARY_RED} !important;
-        color: white !important;
-        border-radius: 6px !important;
-    }}
     h1, h2, h3, h4 {{
         color: {PRIMARY_RED};
     }}
@@ -146,4 +138,47 @@ if st.session_state.user_id is not None:
     if recs:
         COLS = 3
         for i in range(0, len(recs), COLS):
-            cols = st.colu
+            cols = st.columns(COLS)
+            for col, rec in zip(cols, recs[i:i+COLS]):
+                with col:
+                    st.markdown(
+                        f"""
+                        <div style='
+                            padding: 10px;
+                            margin: 10px 0;
+                            border-radius: 8px;
+                            background-color: #f9f9f9;
+                            border: 1px solid {PRIMARY_RED};
+                            min-height: 250px;
+                            color: {TEXT_COLOR};
+                        '>
+                            <h4 style='color:{PRIMARY_RED}; margin-top:0;'>{rec['title']}</h4>
+                            <p><b>Autor:</b> {rec['author']}</p>
+                            <p><b>Categoria:</b> {rec['category']}</p>
+                            <p><b>Score:</b> {rec.get('score', 'N/A'):.4f}</p>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+
+                    col_like, col_dislike = st.columns(2)
+
+                    if col_like.button("👍 Gostei", key=f"like_{rec['item_id']}"):
+                        service.rate_item(current_user, rec["item_id"], 1)
+                        st.session_state.recommendations.remove(rec)
+                        st.rerun()
+
+                    if col_dislike.button("👎 Não Gostei", key=f"dislike_{rec['item_id']}"):
+                        service.rate_item(current_user, rec["item_id"], 0)
+                        st.session_state.recommendations.remove(rec)
+                        st.rerun()
+    else:
+        st.warning("Nenhuma recomendação disponível.")
+
+# --- Navegação ---
+st.sidebar.divider()
+if st.sidebar.button("Ir para Avaliação de Métricas"):
+    st.switch_page("pages/2_Avaliacao_Metricas.py")
+
+if st.sidebar.button("Limpar Perfil e Recomeçar"):
+    service.clear_session()
