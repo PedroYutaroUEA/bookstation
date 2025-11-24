@@ -27,24 +27,29 @@ class RecommendationService:
 
     def _initialize_fbc(self):
         """Inicializa o TF-IDF e vetoriza todos os livros."""
-        if self.books.empty:
+        if len(self.books) == 0:
             return
 
         # 1. Pré-processamento: Cria uma string de conteúdo para vetorização
         #Primeiramente defina as colunas de todos os termos no dataset
         todos_termos = set()
-        for item_id, book in books:
-            termos = f"{book['description']} {book['category']} {book['authors']}".lower().split()
+        termos_books = {}
+        for item_id, book in self.books.items():
+            termos = book['description']
+            termos += ' ' + book['category'].replace(',', ' ')
+            termos += ' ' + book['authors'].replace(',', ' ').lower().replace('and', ' ')
+            termos = termos.split()
+
             todos_termos.update(termos)
-            books['termos'] = termos
+            termos_books[item_id] = termos
 
         #Agora transformemos em uma lista ordenada
-        self.todos_termos = list(todos_termos)
+        todos_termos = list(todos_termos)
 
         # 2. Vetorização TF-I
-        for item_id, book in books:
+        for item_id, book in self.books.items():
             vetor = [0] * len(todos_termos)
-            for termo in book['termos']:
+            for termo in termos_books[item_id]:
                 vetor[todos_termos.index(termo)] = calculate_tf_idf(termo, todos_termos)
             self.vectors[item_id] = vetor
 
@@ -76,7 +81,7 @@ class RecommendationService:
         """Gera recomendações baseadas nos atributos iniciais do Cold Start."""
 
         # Filtro de conteúdo baseado em metadados puros
-        filtered_books = filter(lambda book: book['cartegory'] in cartegories and price_min <= float(book['price']) <= price_max, self.books)
+        filtered_books = filter(lambda book: book['category'].split(',') in categories and price_min <= float(book['price']) <= price_max, self.books.values())
 
         # Amostra aleatória dos melhores itens filtrados (Content-Based puro)
         sample_size = min(Config.MAX_RECOMMENDATIONS, len(filtered_books))
@@ -87,7 +92,6 @@ class RecommendationService:
 
     def recommend_items(self, user_id: int) -> list:
         """Gera recomendações com base no perfil vetorizado do usuário (FBC principal)."""
-
         user_profile = self.build_user_profile(user_id)
 
         # Se o perfil é zero (usuário novo, sem likes)
