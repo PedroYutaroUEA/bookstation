@@ -168,12 +168,27 @@ if st.session_state.user_id is not None:
                             background-color: {SECONDARY_BACKGROUND};
                             border: 1px solid {PRIMARY_COLOR};
                             color: white;
-                            min-height: 250px;
+                            overflow: hidden;
+                            height: 300px;
                         '>
-                            <h4 style='color: white; margin-top: 0; font-size: 16px;'>{rec['title']}</h4>
-                            <p style='color: #ccc; font-size: 12px;'>**Autor:** {rec['authors']}</p>
-                            <p style='color: {PRIMARY_COLOR}; font-size: 12px;'>**Categoria:** {rec['category']}</p>
+                            <h4 style='color: white; margin-top: 0; font-size: 16px;'>{rec.get('title', 'N/A')}</h4>
+                            <p style='color: #ccc; font-size: 12px;'>Autor: {rec.get('authors', 'N/A')}</p>
+                            <p style='color: {PRIMARY_COLOR}; font-size: 12px;'>Categoria: {rec.get('category', 'N/A')}</p>
                             <p style='color: #ddd; font-size: 14px;'>Score: {rec.get('score', 'N/A')}</p>
+                            <hr style='border-top: 1px solid #555; margin: 5px 0;'>
+                            <div style='
+                                height: 80px; 
+                                overflow-y: scroll; 
+                                text-overflow: ellipsis; 
+                                display: -webkit-box;
+                                -webkit-line-clamp: 4; 
+                                -webkit-box-orient: vertical;
+                                font-size: 12px; 
+                                color: #ddd;
+                            '>
+                                <span style='color: #fff; font-size: 14px;'>Descrição: </span>
+                                <p style='color: {TEXT_COLOR}; font-size: 14px;'>{rec.get('description', 'N/A')}</p>
+                            </div>
                         </div>
                         """,
                         unsafe_allow_html=True,
