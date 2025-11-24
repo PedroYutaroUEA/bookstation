@@ -9,7 +9,7 @@ def load_books():
     """Carrega o catálogo de livros."""
 
     books = {}
-    with open(Config.DATA_FILE, newline='') as csv_books:
+    with open(Config.ITEMS_FILE, newline='') as csv_books:
         reader = csv.DictReader(csv_books)
         for row in reader:
             item_id = row['item_id']
@@ -24,7 +24,12 @@ def load_ratings():
     user_ratings = {}
     with open(Config.RATINGS_FILE, newline='') as csv_ratings:
         reader = csv.reader(csv_ratings)
+        on_header = True
         for row in reader:
+            if on_header:
+                on_header = False
+                continue #o primeiro row é so cabeçalho, então pula
+
             userId, itemId, rating = row
             user_ratings[int(userId)] = (int(itemId), int(rating))
 
