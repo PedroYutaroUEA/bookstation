@@ -64,7 +64,8 @@ class RecommendationService:
 
         # 3. Calcular o perfil: Média dos vetores
         user_profile_vector = np.mean(liked_vectors, axis=0)
-        return user_profile_vector
+        result = np.asarray(user_profile_vector).flatten()
+        return result
 
     def get_initial_recommendations(
         self, categories: list, price_min: float, price_max: float

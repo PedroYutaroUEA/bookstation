@@ -2,6 +2,7 @@ import pandas as pd
 from app.config import Config
 from .item_rating import ItemRating
 from .simulate_request import SimulateRequest
+from pandas import DataFrame
 
 # --- Funções de I/O (Data Persistence) ---
 
@@ -22,3 +23,7 @@ def load_ratings():
     except FileNotFoundError:
         print(f"Erro: Arquivo {Config.RATINGS_FILE} não encontrado.")
         return pd.DataFrame()
+
+
+def save_ratings(df: DataFrame):
+    df.to_csv(Config.RATINGS_FILE, index=False)
