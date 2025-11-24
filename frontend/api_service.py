@@ -9,7 +9,7 @@ def fetch_catalog_metadata():
     """Busca gêneros e faixas de preço (simuladas) do backend."""
     # Supondo que o backend tenha um endpoint /metadata
     try:
-        response = requests.get(f"{BASE_URL}/metadata", timeout=5)
+        response = requests.get(f"{BASE_URL}/metadata", timeout=90)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
@@ -46,7 +46,7 @@ class ApiService:
             st.session_state.catalog_data = fetch_catalog_metadata()
             st.session_state.initialized = True
 
-    def simulate_user_api(self, categories, price_range):
+    def simulate_user_api(self, categories: list, price_range: list[float]):
         """Cria/Simula um novo usuário para o cold start."""
         try:
             response = requests.post(
@@ -59,7 +59,9 @@ class ApiService:
                 timeout=90,
             )
             response.raise_for_status()
-            return response.json().get("user_id")
+            res = response.json()
+            print(f"[FRONTEND - ApiService]: simulate_user_api response: {res}")
+            return res
         except requests.exceptions.RequestException as e:
             st.error(f"Erro ao simular usuário: {e}")
             return None
@@ -67,6 +69,8 @@ class ApiService:
     def fetch_recommendations(self, user_id, n):
         """Busca recomendações personalizadas com base no perfil."""
         try:
+            data = [user_id, n]
+            print(f"[FRONTEND - ApiService]: fetch_recommendations data: {data}")
             response = requests.get(
                 f"{self.base_url}/recomendar",
                 params={"user_id": user_id, "n": n},

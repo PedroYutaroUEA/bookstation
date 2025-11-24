@@ -9,6 +9,7 @@ class UserController:
         # NOTA: O FBC não precisa de um novo ID de usuário, mas sim de um perfil temporário.
         # Aqui, apenas retornamos um novo ID (o próximo do ratings) para simulação.
         ratings = load_ratings()
+        print(f"[BACKEND - UserController]: ratings: {ratings}")
         new_id = ratings["user_id"].max() + 1 if not ratings.empty else 1
 
         # Lógica de Cold Start: Retorna livros filtrados pelos atributos iniciais
@@ -17,7 +18,9 @@ class UserController:
         )
 
         # Para a demonstração, o backend retornará as recomendações iniciais diretamente
-        return {"user_id": int(new_id), "recommendations": recommendations}
+        res = {"user_id": int(new_id), "recommendations": recommendations}
+        print(f"[BACKEND - UserController]: response: {res}")
+        return res
 
     def rate_item(self, rating_data: ItemRating):
         # NOTA: Em produção, isso iria para o DB. Aqui, apenas salvamos o perfil

@@ -45,9 +45,13 @@ class RecommendationService:
         ]["item_id"].unique()
 
         if len(liked_items_ids) == 0:
-            return np.zeros(
+            zeros = np.zeros(
                 self._item_vectors.shape[1]
             )  # Retorna vetor zero para Cold Start
+            print(
+                f"[BACKEND - RecommendationService]: Usuario n gosstou de nenhum item: {zeros}"
+            )
+            return zeros
 
         # 1. Encontrar índices dos livros que o usuário gostou no vetor de itens
         item_indices = self.books[self.books["item_id"].isin(liked_items_ids)].index
@@ -74,21 +78,27 @@ class RecommendationService:
             & (self.books["price"] <= price_max)
         ]
 
+        print(f"[BACKEND - RecommendationService]: filtered_books: {filtered_books}")
+
         # Amostra aleatória dos melhores itens filtrados (Content-Based puro)
         sample_size = min(Config.MAX_RECOMMENDATIONS, len(filtered_books))
         if filtered_books.empty or sample_size == 0:
             return []
 
-        return filtered_books.sample(n=sample_size).to_dict(orient="records")
+        sample = filtered_books.sample(n=sample_size).to_dict(orient="records")
+        print(f"[BACKEND - RecommendationService]: sample: {sample}")
+        return sample
 
     def recommend_items(self, user_id: int) -> list:
         """Gera recomendações com base no perfil vetorizado do usuário (FBC principal)."""
 
         user_profile = self.build_user_profile(user_id)
+        print(f"[BACKEND - RecommendationService]: profile: {user_profile}")
 
         # Se o perfil é zero (usuário novo, sem likes)
         if np.all(user_profile == 0):
             # Não temos como gerar FBC, precisa do Cold Start ou likes
+            print(f"[BACKEND - RecommendationService]: Retornando array vazio...")
             return []
 
         # 1. Calcular Similaridade: Cosseno entre o Perfil do Usuário e TODOS os itens
