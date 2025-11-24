@@ -1,8 +1,8 @@
 from app.models import load_books
 
-
 class BookController:
     """Controller para manipulação de dados de livros."""
+    books = load_books()
 
     def __init__(self):
         self.books = load_books()
