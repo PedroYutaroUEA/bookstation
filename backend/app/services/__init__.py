@@ -1,68 +1,85 @@
 import numpy as np
-import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.metrics import precision_score, recall_score, f1_score
-
+import math
 from app.models import load_books, load_ratings
 from app.config import Config
+
+
+def calculate_tf_idf(term, words):
+    return words.count(term) / len(words)
+
+
+def cosine_similarity(vec1, vec2):
+    print("oiiii")
+    assert len(vec1) == len(vec2), "Ambos vetores devem ter mesma dimensão"
+
+    dot = sum(vec1[i] * vec2[i] for i in range(len(vec1)))
+    norm_1 = math.sqrt(sum(x**2 for x in vec1))
+    norm_2 = math.sqrt(sum(x**2 for x in vec2))
+
+    if norm_1 == 0 or norm_2 == 0:
+        return 0.0
+
+    return dot / (norm_1 * norm_2)
 
 
 class RecommendationService:
     def __init__(self):
         self.books = load_books()
         self.ratings = load_ratings()
-        self._vectorizer = None
-        self._item_vectors = None
+        self.vectors = {}
         self._initialize_fbc()
 
     def _initialize_fbc(self):
         """Inicializa o TF-IDF e vetoriza todos os livros."""
-        if self.books.empty:
+        if len(self.books) == 0:
             return
 
         # 1. Pré-processamento: Cria uma string de conteúdo para vetorização
-        # Usamos descrição e gênero
-        self.books["content"] = self.books.apply(
-            lambda row: f"{row['description']} {row['category']} {row['authors']}",
-            axis=1,
-        ).fillna("")
+        # Primeiramente defina as colunas de todos os termos no dataset
+        todos_termos = set()
+        termos_books = {}
+        for item_id, book in self.books.items():
+            termos = book["description"]
+            termos += " " + book["category"].replace(",", " ")
+            termos += " " + book["authors"].replace(",", " ").lower().replace(
+                "and", " "
+            )
+            termos = termos.split()
 
-        # 2. Vetorização TF-IDF
-        self._vectorizer = TfidfVectorizer(stop_words="english", min_df=1, max_df=0.8)
-        self._item_vectors = self._vectorizer.fit_transform(self.books["content"])
+            todos_termos.update(termos)
+            termos_books[item_id] = termos
 
-        print(f"FBC Inicializado. Vetores de itens shape: {self._item_vectors.shape}")
+        # Agora transformemos em uma lista ordenada
+        todos_termos = list(todos_termos)
+
+        # 2. Vetorização TF-I
+        for item_id, book in self.books.items():
+            vetor = [0] * len(todos_termos)
+            for termo in termos_books[item_id]:
+                vetor[todos_termos.index(termo)] = calculate_tf_idf(termo, todos_termos)
+            self.vectors[item_id] = vetor
+
+        print(
+            f"FBC Inicializado. Vetores de itens dimens?o: {(len(todos_termos), len(self.vectors))}"
+        )
 
     def build_user_profile(self, user_id: int):
         """
         Constrói o vetor de perfil do usuário a partir da média dos vetores dos itens que ele gostou.
         Se o usuário for novo, retorna um vetor vazio (zero).
         """
-        # Assumimos que 'rating' 1 = Gosto
-        liked_items_ids = self.ratings[
-            (self.ratings["user_id"] == user_id) & (self.ratings["rating"] == 1)
-        ]["item_id"].unique()
+        # 1. Extrair os vetores desses itens
+        liked_vectors = []
+        for item_id, rating in self.ratings[user_id]:
+            # Só queremos os items avaliado positivamente
+            if rating != 1:
+                continue
+            liked_vectors += self.vectors[item_id]
 
-        if len(liked_items_ids) == 0:
-            zeros = np.zeros(
-                self._item_vectors.shape[1]
-            )  # Retorna vetor zero para Cold Start
-            print(
-                f"[BACKEND - RecommendationService]: Usuario n gosstou de nenhum item: {zeros}"
-            )
-            return zeros
+        if len(liked_vectors) == 0:
+            return []
 
-        # 1. Encontrar índices dos livros que o usuário gostou no vetor de itens
-        item_indices = self.books[self.books["item_id"].isin(liked_items_ids)].index
-
-        if len(item_indices) == 0:
-            return np.zeros(self._item_vectors.shape[1])
-
-        # 2. Extrair os vetores desses itens
-        liked_vectors = self._item_vectors[item_indices]
-
-        # 3. Calcular o perfil: Média dos vetores
+        # 2. Calcular o perfil: Média dos vetores
         user_profile_vector = np.mean(liked_vectors, axis=0)
         return user_profile_vector
 
@@ -72,74 +89,40 @@ class RecommendationService:
         """Gera recomendações baseadas nos atributos iniciais do Cold Start."""
 
         # Filtro de conteúdo baseado em metadados puros
-        filtered_books = self.books[
-            (self.books["category"].isin(categories))
-            & (self.books["price"] >= price_min)
-            & (self.books["price"] <= price_max)
-        ]
-
-        print(f"[BACKEND - RecommendationService]: filtered_books: {filtered_books}")
+        filtered_books = filter(
+            lambda book: book["category"].split(",") in categories
+            and price_min <= float(book["price"]) <= price_max,
+            self.books.values(),
+        )
 
         # Amostra aleatória dos melhores itens filtrados (Content-Based puro)
         sample_size = min(Config.MAX_RECOMMENDATIONS, len(filtered_books))
-        if filtered_books.empty or sample_size == 0:
+        if len(filtered_books) == 0 or sample_size == 0:
             return []
 
-        sample = filtered_books.sample(n=sample_size).to_dict(orient="records")
-        print(f"[BACKEND - RecommendationService]: sample: {sample}")
-        return sample
+        return list(filtered_books)[: Config.MAX_RECOMMENDATIONS]
 
     def recommend_items(self, user_id: int) -> list:
         """Gera recomendações com base no perfil vetorizado do usuário (FBC principal)."""
-
         user_profile = self.build_user_profile(user_id)
-        print(f"[BACKEND - RecommendationService]: profile: {user_profile}")
-
         # Se o perfil é zero (usuário novo, sem likes)
-        if np.all(user_profile == 0):
+        if len(user_profile) == 0:
             # Não temos como gerar FBC, precisa do Cold Start ou likes
-            print(f"[BACKEND - RecommendationService]: Retornando array vazio...")
             return []
+        # Só calcule as recomendações com os vetores(items) que não foram avaliados pelo usuários para que ele não seja recomendado novamente eles
+        vectors_filtered = self.vectors[:]
+        for item_id, _ in self.ratings[user_id]:
+            del vectors_filtered[item_id]
 
-        # 1. Calcular Similaridade: Cosseno entre o Perfil do Usuário e TODOS os itens
-        # user_profile é (1, N_features), item_vectors é (N_items, N_features)
-
-        # Otimização: Sample items para evitar calcular similaridade em todos 65k itens
-        items_to_check = self.books.sample(
-            n=min(Config.MAX_ITEMS_TO_CHECK, len(self.books))
-        ).index
-
-        # Calcula similaridade para os itens selecionados (mais rápido)
-        item_vectors_sample = self._item_vectors[items_to_check]
-
-        # Calcular similaridade do cosseno
-        # Reshape do vetor de perfil para (1, N)
-        similarity_scores = cosine_similarity(
-            user_profile.reshape(1, -1), item_vectors_sample
-        )
-
-        # 2. Ranqueamento
-        # Achatando o array de scores para 1D e combinando com os índices originais
-        scores_df = pd.DataFrame(
-            {"score": similarity_scores.flatten(), "original_index": items_to_check}
-        )
-
-        # Filtrar itens já avaliados (para não recomendar o que o usuário já viu)
-        liked_ids = self.ratings[self.ratings["user_id"] == user_id]["item_id"].unique()
-
-        # Mapeia de volta para o catálogo original e ranqueia
-        recommended_indices = scores_df.sort_values(by="score", ascending=False)[
-            "original_index"
+        # 1. Calcular Similaridade: Cosseno entre o Perfil do Usuário e TODOS os items
+        sims = [
+            (item_id, cosine_similarity(user_profile, vetor))
+            for item_id, vetor in vectors_filtered.items()
         ]
+        sims.sort(lambda x: x[1])  # Ordernar com base na similaridade
 
-        # 3. Filtragem e Seleção do Top N
-        recommended_books = self.books.loc[recommended_indices]
-
-        final_recs = recommended_books[
-            ~recommended_books["item_id"].isin(liked_ids)
-        ].head(Config.MAX_RECOMMENDATIONS)
-
-        return final_recs.to_dict(orient="records")
+        # 2. Retornar somente os top N items
+        return map(lambda x: self.books[x[0]], sims[: Config.MAX_RECOMMENDATIONS])
 
     # --- Cálculo de Métricas ---
 
@@ -151,13 +134,11 @@ class RecommendationService:
 
         # 1. GABARITO (True Positives): O que o usuário realmente gostou
         # Baseado em todas as avaliações positivas (rating=1) no dataset de avaliação
-        actual_likes_df = self.ratings[
-            (self.ratings["user_id"] == user_id) & (self.ratings["rating"] == 1)
-        ]
-        actual_likes_ids = actual_likes_df["item_id"].unique()
+        user_likes = filter(lambda x: x[1] == 1, self.ratings[user_id])
+        actual_likes_ids = map(lambda x: x[0], user_likes)
 
         # Requisito Mínimo: Deve ter pelo menos 5 likes no gabarito para ter sentido
-        if len(actual_likes_ids) < 5:
+        if len(user_likes) < 5:
             return {
                 "f1_score": None,
                 "reason": "Usuário precisa de pelo menos 5 likes no dataset de avaliações para métricas.",
