@@ -4,18 +4,25 @@ class BookController:
     """Controller para manipulação de dados de livros."""
     books = load_books()
 
-    #armazene todas as cartegorias de livros
-    categories = set()
-    for book in books.values():
-        categories.update(map(lambda x: x.strip(), book['category'].split(',')))
+    def __init__(self):
+        self.books = load_books()
 
-    price_min = min(map(lambda book: float(book['price']), books.values()))
-    price_max = max(map(lambda book: float(book['price']), books.values()))
+    def get_all_categories(self):
+        if self.books.empty or "category" not in self.books.columns:
+            return []
+        categories_series = self.books["category"].dropna()
+        all_categories = categories_series.str.split(",").explode()
+        cleaned_categories = all_categories.str.strip().unique()
+        return sorted(cleaned_categories[cleaned_categories != ""].tolist())
 
     def get_metadata(self):
-        assert len(self.books) > 0, "O dataset books está vazio"
+        if self.books.empty or "price" not in self.books.columns:
+            return {"categories": self.get_all_categories(), "price_range": [0, 100]}
 
         return {
-            "categories": self.categories,
-            "price_range": [self.price_min, self.price_max]
+            "categories": self.get_all_categories(),
+            "price_range": [
+                float(self.books["price"].min()),
+                float(self.books["price"].max()),
+            ],
         }
