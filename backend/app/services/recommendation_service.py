@@ -72,8 +72,10 @@ class RecommendationService:
         """Gera recomendações baseadas nos atributos iniciais do Cold Start."""
 
         # Filtro de conteúdo baseado em metadados puros
+        category_regex = "|".join([f"({c})" for c in categories])
+
         filtered_books = self.books[
-            (self.books["category"].isin(categories))
+            (self.books["category"].str.contains(category_regex, case=False, na=False))
             & (self.books["price"] >= price_min)
             & (self.books["price"] <= price_max)
         ]
