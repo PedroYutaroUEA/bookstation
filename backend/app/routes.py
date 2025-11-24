@@ -1,3 +1,4 @@
+from app.models.item_rating import RatingBatch
 from fastapi import APIRouter, Depends
 from .controllers import (
     BookController,
@@ -36,11 +37,11 @@ def simulate_user(
     return user_controller.simulate_user(body, service)
 
 
-@router.post("/rate")
-def rate_item(rating_data: ItemRating):
+@router.post("/rate_batch")
+def rate_item(rating_data: RatingBatch):
     # NOTA: Em um sistema FBC puro, isso apenas atualizaria o perfil do usuário na sessão/DB,
     # mas aqui, faremos a FBC usar a avaliação na próxima rodada.
-    return user_controller.rate_item(rating_data)
+    return user_controller.rate_item_batch(rating_data)
 
 
 @router.get("/recomendar")

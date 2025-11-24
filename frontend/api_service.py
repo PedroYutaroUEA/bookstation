@@ -45,6 +45,34 @@ class ApiService:
             # Carrega dados do catálogo (gêneros e faixas de preço)
             st.session_state.catalog_data = fetch_catalog_metadata()
             st.session_state.initialized = True
+            st.session_state.rating_queue = {}
+
+    def send_rating_batch(self, user_id: int, ratings_queue: dict):
+        """
+        Envia um lote de avaliações para o backend.
+        ratings_queue deve ser {item_id: rating_value}.
+        """
+        if not ratings_queue:
+            return True  # Nada para enviar
+
+        # Converte o dicionário de fila em uma lista de objetos JSON para o FastAPI
+        ratings_list = [
+            {"user_id": user_id, "item_id": item_id, "rating": rating}
+            for item_id, rating in ratings_queue.items()
+        ]
+
+        try:
+            # Chamamos o novo endpoint do backend /rate_batch
+            response = requests.post(
+                f"{self.base_url}/rate_batch",
+                json={"ratings": ratings_list},
+                timeout=90,
+            )
+            response.raise_for_status()
+            return True
+        except requests.exceptions.RequestException as e:
+            st.error(f"Erro ao enviar avaliações em lote: {e}")
+            return False
 
     def simulate_user_api(self, categories: list, price_range: list[float]):
         """Cria/Simula um novo usuário para o cold start."""
@@ -95,20 +123,6 @@ class ApiService:
         except requests.exceptions.RequestException as e:
             st.error(f"Erro ao calcular métricas: {e}")
             return None
-
-    def rate_item(self, user_id, item_id, rating: int):
-        """Envia o rating (1=like, 0=dislike) e força a atualização do perfil."""
-        try:
-            response = requests.post(
-                f"{self.base_url}/rate",
-                json={"user_id": user_id, "item_id": item_id, "rating": rating},
-                timeout=90,
-            )
-            response.raise_for_status()
-            return True
-        except requests.exceptions.RequestException as e:
-            st.error(f"Erro ao enviar avaliação: {e}")
-            return False
 
     def clear_session(self):
         """Limpa todo o estado da sessão."""

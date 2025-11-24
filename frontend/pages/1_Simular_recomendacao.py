@@ -134,19 +134,56 @@ if st.session_state.user_id is None:
                     else:
                         print(f"[FRONTEND] USER ID IS NONE IDK WHY")
 
+
+def handle_rate_in_queue(item_id: int, rating: int):
+    """Adiciona/Atualiza o rating na fila local."""
+    st.session_state.rating_queue[item_id] = rating
+    st.toast(f"Avaliação {rating} para o item {item_id} registrada localmente.")
+
+
+def process_ratings_and_update(user_id: int, n: int):
+    """Função chamada pelo botão 'Atualizar Recomendações'."""
+    queue = st.session_state.rating_queue
+
+    if not queue:
+        st.warning("Nenhuma nova avaliação para processar.")
+        return
+
+    # 1. Enviar o lote para o Backend
+    if service.send_rating_batch(user_id, queue):
+
+        # 2. Limpar a fila local
+        st.session_state.rating_queue = {}
+
+        # 3. Chamar o FBC principal para atualizar
+        st.session_state.recommendations = service.fetch_recommendations(user_id, n)
+
+        st.success(f"{len(queue)} avaliações processadas. Perfil atualizado!")
+    else:
+        st.error("Falha ao atualizar o perfil no backend.")
+
+    st.rerun()
+
+
 # --- 2. Recomendações ---
 if st.session_state.user_id is not None:
     current_user = st.session_state.user_id
     st.sidebar.success(f"Usuário Ativo: **{current_user}**")
 
     st.header(f"2. Recomendações de Livros ({N_RECOMMEND} itens)")
-    st.info("Avalie os livros para melhorar suas recomendações!")
-
-    if st.button("🔄 Atualizar Recomendações"):
-        st.session_state.recommendations = service.fetch_recommendations(
-            current_user, N_RECOMMEND
+    if st.session_state.rating_queue:
+        st.error(
+            f"⚠️ {len(st.session_state.rating_queue)} avaliações pendentes. Clique em Atualizar!"
         )
-        st.rerun()
+    else:
+        st.info(
+            "Avalie os livros (Gosto/Não Gosto) e clique em Atualizar para refinar seu perfil!"
+        )
+
+    if st.button(
+        "🔄 Atualizar Recomendações", type="primary"
+    ):  # Agora este botão processa o batch
+        process_ratings_and_update(current_user, N_RECOMMEND)
 
     recs = st.session_state.recommendations
 
@@ -198,20 +235,14 @@ if st.session_state.user_id is not None:
                     col_like, col_dislike = st.columns(2)
 
                     if col_like.button("👍 Gosto (1)", key=f"like_{rec['item_id']}"):
-                        if service.rate_item(current_user, rec["item_id"], 1):
-                            st.toast(f"Like em '{rec['title']}'! Perfil atualizado.")
-                            st.session_state.recommendations.remove(
-                                rec
-                            )  # Remove da lista para não poluir
-                            st.rerun()
+                        handle_rate_in_queue(rec["item_id"], 1)
+                        st.rerun()
 
                     if col_dislike.button(
                         "👎 Não Gosto (0)", key=f"dislike_{rec['item_id']}"
                     ):
-                        if service.rate_item(current_user, rec["item_id"], 0):
-                            st.toast(f"Dislike em '{rec['title']}'. Perfil atualizado.")
-                            st.session_state.recommendations.remove(rec)
-                            st.rerun()
+                        handle_rate_in_queue(rec["item_id"], 0)
+                        st.rerun()
     else:
         st.warning("Nenhum livro recomendado. Tente atualizar seu perfil.")
 
