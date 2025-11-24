@@ -117,16 +117,22 @@ if st.session_state.user_id is None:
                 st.warning("Selecione ao menos um gênero.")
             else:
                 with st.spinner("Criando perfil..."):
-                    new_user_id = service.simulate_user_api(
+                    result = service.simulate_user_api(
                         selected_categories, selected_price_range
                     )
-                    if new_user_id is not None:
-                        st.session_state.user_id = new_user_id
-                        st.session_state.recommendations = (
-                            service.fetch_recommendations(new_user_id, N_RECOMMEND)
+                    # CORREÇÃO: O simulate_user_api agora retorna as recomendações iniciais
+                    # do Cold Start (Content-Based puro)
+                    new_user_id = result.get("user_id") if result else None
+                    if result and result.get("user_id") is not None:
+                        print(f"[FRONTEND] NEW USER ID: {new_user_id}")
+                        st.session_state.recommendations = result.get(
+                            "recommendations", []
                         )
+                        st.session_state.user_id = new_user_id
                         st.success(f"Perfil criado! ID: {new_user_id}")
                         st.rerun()
+                    else:
+                        print(f"[FRONTEND] USER ID IS NONE IDK WHY")
 
 # --- 2. Recomendações ---
 if st.session_state.user_id is not None:
@@ -165,9 +171,9 @@ if st.session_state.user_id is not None:
                             min-height: 250px;
                         '>
                             <h4 style='color: white; margin-top: 0; font-size: 16px;'>{rec['title']}</h4>
-                            <p style='color: #ccc; font-size: 12px;'>**Autor:** {rec['author']}</p>
+                            <p style='color: #ccc; font-size: 12px;'>**Autor:** {rec['authors']}</p>
                             <p style='color: {PRIMARY_COLOR}; font-size: 12px;'>**Categoria:** {rec['category']}</p>
-                            <p style='color: #ddd; font-size: 14px;'>Score: {rec.get('score', 'N/A'):.4f}</p>
+                            <p style='color: #ddd; font-size: 14px;'>Score: {rec.get('score', 'N/A')}</p>
                         </div>
                         """,
                         unsafe_allow_html=True,

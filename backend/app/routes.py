@@ -37,6 +37,7 @@ def simulate_user(
     service: RecommendationService = Depends(get_recommendation_service),
 ):
     # Retorna o ID de usuário simulado e as recomendações iniciais do Cold Start
+    print(f"[BACKEND - /simulate]: body: {body};")
     return user_controller.simulate_user(body, service)
 
 
@@ -53,6 +54,7 @@ def get_recommendations(
     n: int,
     service: RecommendationService = Depends(get_recommendation_service),
 ):
+    print(f"[BACKEND - /recomendar]: user_id: {user_id};")
     return rec_controller.get_recommendations(user_id, n, service)
 
 
