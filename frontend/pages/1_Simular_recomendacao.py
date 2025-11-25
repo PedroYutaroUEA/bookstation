@@ -86,7 +86,6 @@ st.markdown("---")
 
 catalog_metadata = fetch_catalog_metadata()
 available_categories = catalog_metadata.get("categories", [])
-price_min, price_max = catalog_metadata.get("price_range", [10, 100])
 
 # --- 1. Simulação Inicial (Cold Start) ---
 if st.session_state.user_id is None:
@@ -102,14 +101,6 @@ if st.session_state.user_id is None:
             default=available_categories[:2],
         )
 
-        selected_price_range = st.slider(
-            "Faixa de Preço (R$):",
-            min_value=float(price_min),
-            max_value=float(price_max),
-            value=(float(price_min), float(price_max)),
-            step=5.0,
-        )
-
         submitted = st.form_submit_button("Gerar Perfil e Recomendações")
 
         if submitted:
@@ -117,9 +108,8 @@ if st.session_state.user_id is None:
                 st.warning("Selecione ao menos um gênero.")
             else:
                 with st.spinner("Criando perfil..."):
-                    result = service.simulate_user_api(
-                        selected_categories, selected_price_range
-                    )
+                    result = service.simulate_user_api(selected_categories)
+
                     # CORREÇÃO: O simulate_user_api agora retorna as recomendações iniciais
                     # do Cold Start (Content-Based puro)
                     new_user_id = result.get("user_id") if result else None
@@ -210,7 +200,7 @@ if st.session_state.user_id is not None:
                         '>
                             <h4 style='color: white; margin-top: 0; font-size: 16px;'>{rec.get('title', 'N/A')}</h4>
                             <p style='color: #ccc; font-size: 12px;'>Autor: {rec.get('authors', 'N/A')}</p>
-                            <p style='color: {PRIMARY_COLOR}; font-size: 12px;'>Categoria: {rec.get('category', 'N/A')}</p>
+                            <p style='color: {PRIMARY_COLOR}; font-size: 12px;'>Categoria: {', '.join(eval(rec.get('category', 'N/A')))}</p>
                             <p style='color: #ddd; font-size: 14px;'>Score: {rec.get('score', 'N/A')}</p>
                             <hr style='border-top: 1px solid #555; margin: 5px 0;'>
                             <div style='

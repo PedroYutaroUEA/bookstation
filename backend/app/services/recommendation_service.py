@@ -67,18 +67,14 @@ class RecommendationService:
         result = np.asarray(user_profile_vector).flatten()
         return result
 
-    def get_initial_recommendations(
-        self, categories: list, price_min: float, price_max: float
-    ) -> list:
+    def get_initial_recommendations(self, categories: list) -> list:
         """Gera recomendações baseadas nos atributos iniciais do Cold Start."""
 
         # Filtro de conteúdo baseado em metadados puros
         category_regex = "|".join([f"({c})" for c in categories])
 
         filtered_books = self.books[
-            (self.books["category"].str.contains(category_regex, case=False, na=False))
-            & (self.books["price"] >= price_min)
-            & (self.books["price"] <= price_max)
+            self.books["category"].str.contains(category_regex, case=False, na=False)
         ]
 
         print(f"[BACKEND - RecommendationService]: filtered_books: {filtered_books}")

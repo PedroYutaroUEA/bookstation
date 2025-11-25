@@ -24,7 +24,6 @@ def fetch_catalog_metadata():
                 "Thriller",
                 "Poetry",
             ],
-            "price_range": [10.0, 100.0],
         }
 
 
@@ -74,17 +73,13 @@ class ApiService:
             st.error(f"Erro ao enviar avaliações em lote: {e}")
             return False
 
-    def simulate_user_api(self, categories: list, price_range: list[float]):
+    def simulate_user_api(self, categories: list):
         """Cria/Simula um novo usuário para o cold start."""
         try:
             response = requests.post(
                 f"{self.base_url}/simulate",
-                json={
-                    "categories": categories,
-                    "price_min": price_range[0],
-                    "price_max": price_range[1],
-                },
-                timeout=90,
+                json={"categories": categories},
+                timeout=90
             )
             response.raise_for_status()
             res = response.json()
