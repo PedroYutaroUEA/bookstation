@@ -11,7 +11,7 @@ class BookController:
         if self.books.empty or "category" not in self.books.columns:
             return []
         categories_series = self.books["category"].dropna()
-        all_categories = categories_series.str.split(",").explode()
+        all_categories = categories_series.str.split(" , ").explode()
         cleaned_categories = all_categories.str.strip().unique()
         return sorted(cleaned_categories[cleaned_categories != ""].tolist())
 
