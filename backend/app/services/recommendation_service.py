@@ -36,36 +36,46 @@ class RecommendationService:
 
     def build_user_profile(self, user_id: int):
         """
-        Constrói o vetor de perfil do usuário a partir da média dos vetores dos itens que ele gostou.
-        Se o usuário for novo, retorna um vetor vazio (zero).
+        Constrói o vetor de perfil do usuário usando pesos positivos e negativos.
+        rating = 1  -> peso positivo (puxa o vetor)
+        rating = 0  -> peso negativo (empurra o vetor)
         """
-        # Assumimos que 'rating' 1 = Gosto
-        liked_items_ids = self.ratings[
-            (self.ratings["user_id"] == user_id) & (self.ratings["rating"] == 1)
-        ]["item_id"].unique()
 
-        if len(liked_items_ids) == 0:
-            zeros = np.zeros(
-                self._item_vectors.shape[1]
-            )  # Retorna vetor zero para Cold Start
-            print(
-                f"[BACKEND - RecommendationService]: Usuario n gosstou de nenhum item: {zeros}"
-            )
-            return zeros
+        # DEFINA AQUI OS PESOS
+        POSITIVE_WEIGHT = 2.0
+        NEGATIVE_WEIGHT = -1.0
 
-        # 1. Encontrar índices dos livros que o usuário gostou no vetor de itens
-        item_indices = self.books[self.books["item_id"].isin(liked_items_ids)].index
+        # Pegamos TODOS os itens que o usuário avaliou
+        user_ratings = self.ratings[self.ratings["user_id"] == user_id]
 
-        if len(item_indices) == 0:
+        if user_ratings.empty:
             return np.zeros(self._item_vectors.shape[1])
 
-        # 2. Extrair os vetores desses itens
-        liked_vectors = self._item_vectors[item_indices]
+        user_profile = np.zeros(self._item_vectors.shape[1])
 
-        # 3. Calcular o perfil: Média dos vetores
-        user_profile_vector = np.mean(liked_vectors, axis=0)
-        result = np.asarray(user_profile_vector).flatten()
-        return result
+        for _, row in user_ratings.iterrows():
+            item_id = row["item_id"]
+            rating = row["rating"]
+
+            # encontrar índice do item no TF-IDF
+            matches = self.books[self.books["item_id"] == item_id].index
+            if len(matches) == 0:
+                continue
+
+            idx = matches[0]
+            item_vec = self._item_vectors[idx].toarray().flatten()
+
+            # aplica o peso
+            if rating == 1:
+                user_profile += POSITIVE_WEIGHT * item_vec
+            elif rating == 0:
+                user_profile += NEGATIVE_WEIGHT * item_vec
+
+        # Se por algum motivo ficou tudo zero
+        if np.all(user_profile == 0):
+            return np.zeros(self._item_vectors.shape[1])
+
+        return user_profile
 
     def get_initial_recommendations(self, categories: list) -> list:
         """Gera recomendações baseadas nos atributos iniciais do Cold Start."""
@@ -88,7 +98,7 @@ class RecommendationService:
         print(f"[BACKEND - RecommendationService]: sample: {sample}")
         return sample
 
-    def recommend_items(self, user_id: int) -> list:
+    def recommend_items(self, user_id: int, include_liked=False) -> list:
         """Gera recomendações com base no perfil vetorizado do usuário (FBC principal)."""
 
         user_profile = self.build_user_profile(user_id)
@@ -108,6 +118,7 @@ class RecommendationService:
             n=min(Config.MAX_ITEMS_TO_CHECK, len(self.books))
         ).index
 
+
         # Calcula similaridade para os itens selecionados (mais rápido)
         item_vectors_sample = self._item_vectors[items_to_check]
 
@@ -123,8 +134,10 @@ class RecommendationService:
             {"score": similarity_scores.flatten(), "original_index": items_to_check}
         )
 
-        # Filtrar itens já avaliados (para não recomendar o que o usuário já viu)
-        liked_ids = self.ratings[self.ratings["user_id"] == user_id]["item_id"].unique()
+        liked_ids = []
+        if not include_liked:
+            # Filtrar itens já avaliados (para não recomendar o que o usuário já viu)
+            liked_ids = self.ratings[self.ratings["user_id"] == user_id]["item_id"].unique()
 
         # Mapeia de volta para o catálogo original e ranqueia
         recommended_indices = scores_df.sort_values(by="score", ascending=False)[
@@ -163,7 +176,7 @@ class RecommendationService:
             }
 
         # 2. PREDIÇÃO (Recomendados): O que o sistema sugere
-        recommended_items = self.recommend_items(user_id)
+        recommended_items = self.recommend_items(user_id, True)
         recommended_ids = [item["item_id"] for item in recommended_items]
 
         # Truncar o N para o valor exigido
