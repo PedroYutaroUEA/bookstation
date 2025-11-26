@@ -12,6 +12,7 @@ TEXT_COLOR = "#1a1a1a"
 PRIMARY_RED = "#d90429"
 SIDEBAR_BG = "#f5f5f5"
 SIDEBAR_HIGHLIGHT = "#ef233c"
+WARNING = "#d68d26ca"
 
 st.set_page_config(
     page_title="Bookstation - Métricas",
@@ -43,6 +44,12 @@ st.markdown(
 
     hr {{
         border-top: 2px solid {PRIMARY_RED};
+    }}
+
+    .stAlert div[data-testid="stAlertContainer"] {{
+        background-color: {WARNING} !important;
+        color: {TEXT_COLOR} !important; 
+        border-left: 5px solid {TEXT_COLOR} !important; 
     }}
 
     /* ----------st.metric---------- */
@@ -81,8 +88,11 @@ else:
     st.sidebar.success(f"Usuário Ativo: {user}")
 
     st.subheader("Cálculo das Métricas")
+    st.markdown(
+        "Escolha o **número de recomendações** que deseja avaliar (de 5 a 50) com base no perfil do usuário ativo."
+    )
 
-    n_recommend = st.slider("N Recomendações:", 5, 50, 15, step=5)
+    n_recommend = st.slider("**N Recomendações:**", 5, 50, 15, step=5)
 
     if st.button("Calcular Métricas"):
         with st.spinner("Calculando..."):
