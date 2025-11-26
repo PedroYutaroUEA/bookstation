@@ -91,9 +91,9 @@ else:
         if metrics and metrics.get("f1_score") is not None:
             col1, col2, col3 = st.columns(3)
 
-            col1.metric("Precision", f"{metrics['precision']:.3f}")
-            col2.metric("Recall", f"{metrics['recall']:.3f}")
-            col3.metric("F1-Score", f"{metrics['f1_score']:.3f}")
+            col1.metric("Precision", f"{metrics['precision'] * 100:.1f}%")
+            col2.metric("Recall", f"{metrics['recall'] * 100:.1f}%")
+            col3.metric("F1-Score", f"{metrics['f1_score'] * 100:.1f}%")
 
             st.success("Cálculo concluído.")
         else:
