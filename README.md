@@ -36,13 +36,26 @@ Semelhança de cossenos, pois a avaliação, além de ser binária, ela é feita
 
 # Avaliação do sistema
 ## Precision
-(TODO)
+O quanto das recomendações foram realmente relevantes.
+Fórmula usada: **Precision = TP/TP + FP **
+TP = Qtd de livros que o usuário gostou
+FP = Qtd de livros que o usuário não gostou
 
 ## Recall
-(TODO)
+O quanto o sistema conseguiu recuperar dos livros que o usuário realmente gostou.
+Recall = TP/TP + FN
+FN = livros que o usuário gostou, mas o sistema não recomendou
 
 ## F1-score
-(TODO)
+Equilíbrio entre precisão e abrangência.
+F1 = 2 ( Precision x Recall/ Precision + Recall
+É usado como medida final de quão bom é o sistema em:
+- acerto
+- cobertura
+- Simultaneamente.
 
 # Interpretação dos resultados
-(TODO)
+O sistema apresenta resultados que dependem diretamente da quantidade de likes fornecidos pelo usuário:
+- Precision alto: O sistema consegue identificar com precisão livros alinhados ao gosto do usuário, cometendo poucos erros.
+- Recall alto: O sistema consegue recuperar uma grande parte dos livros que o usuário efetivamente teria gostado.
+- F1-score: Valores mais altos indicam que o modelo está sendo eficaz tanto em sugerir livros adequados quanto em não desperdiçar boas oportunidades.
