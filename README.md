@@ -2,6 +2,7 @@
 - Pedro Yutaro Mont Morency Nakamura
 - Renato Barbosa de Carvalho
 - Ryan Da Silva Marinho
+- Filipe Araújo Paulino
 
 # Objetivo do Sistema
 Recomendar diversos livros ao usuário, de diferentes gêneros, publicadoras e épocas, mas que se assemelham pelo seu descritivo.
