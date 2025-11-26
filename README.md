@@ -20,6 +20,7 @@ O backend utiliza o framework FastAPI e segue rigorosamente a arquitetura Model-
 
 ## 2.1. Separação de Responsabilidades
 
+<pre>
 ├── config.py
 ├── controllers
 │   ├── book_controller.py
@@ -37,7 +38,7 @@ O backend utiliza o framework FastAPI e segue rigorosamente a arquitetura Model-
 │   └── recommendation_service.py /* Motor de Recomendação: Contém a lógica FBC (TF-IDF, Similaridade de Cossenos e Cálculo de Métricas). */
 └── utils
     └── __init__.py
-
+</pre>
 
 ## 2.2. Datasets
 
@@ -76,37 +77,11 @@ Métrica Escolhida: Similaridade de Cossenos (Cosine Similarity).
 
 As métricas são calculadas comparando a lista de $N$ recomendações com o gabarito ($\text{rating}=1$) no ratings.csv.
 
-Métrica
-
-Definição
-
-Fórmula
-
-Interpretação
-
-Precision
-
-A proporção de recomendações que foram acertos.
-
-$TP / (TP + FP)$
-
-Quão preciso é o sistema em evitar erros (FP).
-
-Recall
-
-A proporção de todos os itens gostados que foram recuperados.
-
-$TP / (TP + FN)$
-
-Quão abrangente é o sistema em encontrar todos os itens relevantes (FN).
-
-F1-Score
-
-Média Harmônica de Precision e Recall.
-
-$2 \cdot \frac{Precision \cdot Recall}{Precision + Recall}$
-
-Métrica principal que avalia o equilíbrio entre acerto e cobertura.
+Métrica | Definição | Fórmula | Interpretação
+|---|---|---|---|
+Precision | A proporção de recomendações que foram acertos. | $TP / (TP + FP)$ | Quão preciso é o sistema em evitar erros (FP).
+Recall | A proporção de todos os itens gostados que foram recuperados. | $TP / (TP + FN)$ | Quão abrangente é o sistema em encontrar todos os itens relevantes (FN).
+F1-Score | Média Harmônica de Precision e Recall. | $2 \cdot \frac{Precision \cdot Recall}{Precision + Recall}$ | Métrica principal que avalia o equilíbrio entre acerto e cobertura.
 
 (O cálculo de Precision, Recall e F1-score é implementado no RecommenderService.)
 
