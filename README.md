@@ -41,29 +41,10 @@ O backend utiliza o framework FastAPI e segue rigorosamente a arquitetura Model-
 
 ## 2.2. Datasets
 
-Arquivo
-
-Tamanho
-
-Colunas-Chave
-
-Uso
-
-books.csv
-
-$\approx 17.000$ itens
-
-title, author, description, category
-
-Base para a vetorização de conteúdo.
-
-ratings.csv
-
-$\approx 200$ avaliações
-
-user_id, item_id, rating (0 ou 1)
-
-Exclusivamente para avaliação de métricas.
+Arquivo | Tamanho | Colunas-Chave | Uso
+|---|---|---|---|
+books.csv | $\approx 17.000$ itens | title, author, description, category | Base para a vetorização de conteúdo.
+ratings.csv | $\approx 200$ avaliações | user_id, item_id, rating (0 ou 1) | Exclusivamente para avaliação de métricas.
 
 # 🧠 3. Implementação da Filtragem Baseada em Conteúdo (FBC)
 
