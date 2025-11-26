@@ -22,34 +22,40 @@ st.markdown(
     f"""
     <style>
     .stApp {{ background-color: {BACKGROUND_COLOR}; color: {TEXT_COLOR}; }}
+
     /* Sidebar */
     [data-testid="stSidebar"] {{
         background-color: {SIDEBAR_BG};
     }}
 
-    [data-testid="stSidebarNavItems"] * {{
-        color: {TEXT_COLOR};
+    [data-testid="stSidebar"] * {{
+        color: {TEXT_COLOR} !important;
     }}
 
-    [data-testid="stSidebarNavLink"] {{
-        background-color: transparent;
-        border-radius: 6px;
-        padding: 6px;
-    }}
-
-    [data-testid="stSidebarNavLink"]:hover {{
-        background-color: {SIDEBAR_HIGHLIGHT}33;
-    }}
     .stButton>button {{
         background-color: {PRIMARY_RED} !important;
         color: white !important;
     }}
-    h1, h2, h3, h4 {{ color: {PRIMARY_RED}; }}
-    hr {{ border-top: 2px solid {PRIMARY_RED}; }}
+
+    h1, h2, h3, h4 {{
+        color: {PRIMARY_RED};
+    }}
+
+    hr {{
+        border-top: 2px solid {PRIMARY_RED};
+    }}
+
+    /* ----------st.metric---------- */
+    [data-testid="stMetricValue"], 
+    [data-testid="stMetricLabel"],
+    [data-testid="stMetricDelta"] {{
+        color: #000000 !important;   /* preto */
+    }}
     </style>
     """,
     unsafe_allow_html=True,
 )
+
 
 # -------------------------------------------------------------
 # LOGO
@@ -85,9 +91,9 @@ else:
         if metrics and metrics.get("f1_score") is not None:
             col1, col2, col3 = st.columns(3)
 
-            col1.metric("Precision", f"{metrics['precision']:.3f}")
-            col2.metric("Recall", f"{metrics['recall']:.3f}")
-            col3.metric("F1-Score", f"{metrics['f1_score']:.3f}")
+            col1.metric("Precision", f"{metrics['precision'] * 100:.1f}%")
+            col2.metric("Recall", f"{metrics['recall'] * 100:.1f}%")
+            col3.metric("F1-Score", f"{metrics['f1_score'] * 100:.1f}%")
 
             st.success("Cálculo concluído.")
         else:
