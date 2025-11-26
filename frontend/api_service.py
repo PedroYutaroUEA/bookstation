@@ -45,6 +45,7 @@ class ApiService:
             st.session_state.catalog_data = fetch_catalog_metadata()
             st.session_state.initialized = True
             st.session_state.rating_queue = {}
+            st.session_state.ratings = {}
 
     def send_rating_batch(self, user_id: int, ratings_queue: dict):
         """
@@ -122,4 +123,5 @@ class ApiService:
     def clear_session(self):
         """Limpa todo o estado da sessão."""
         st.session_state.clear()
+        self._initialize_session_state()
         st.rerun()
