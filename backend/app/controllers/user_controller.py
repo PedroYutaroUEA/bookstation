@@ -16,9 +16,7 @@ class UserController:
         new_id = self.ratings["user_id"].max() + 1 if not self.ratings.empty else 1
 
         # Lógica de Cold Start: Retorna livros filtrados pelos atributos iniciais
-        recommendations = service.get_initial_recommendations(
-            body.categories, body.price_min, body.price_max
-        )
+        recommendations = service.get_initial_recommendations(body.categories)
 
         # Para a demonstração, o backend retornará as recomendações iniciais diretamente
         res = {"user_id": int(new_id), "recommendations": recommendations}
