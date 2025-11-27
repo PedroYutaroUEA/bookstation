@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.metrics import precision_score, recall_score, f1_score
 
 from app.models import load_books, load_ratings
 from app.config import Config
@@ -118,7 +117,6 @@ class RecommendationService:
             n=min(Config.MAX_ITEMS_TO_CHECK, len(self.books))
         ).index
 
-
         # Calcula similaridade para os itens selecionados (mais rápido)
         item_vectors_sample = self._item_vectors[items_to_check]
 
@@ -137,7 +135,9 @@ class RecommendationService:
         liked_ids = []
         if not include_liked:
             # Filtrar itens já avaliados (para não recomendar o que o usuário já viu)
-            liked_ids = self.ratings[self.ratings["user_id"] == user_id]["item_id"].unique()
+            liked_ids = self.ratings[self.ratings["user_id"] == user_id][
+                "item_id"
+            ].unique()
 
         # Mapeia de volta para o catálogo original e ranqueia
         recommended_indices = scores_df.sort_values(by="score", ascending=False)[

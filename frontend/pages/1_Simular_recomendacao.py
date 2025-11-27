@@ -1,9 +1,12 @@
 from pages import PAGE_2
 import streamlit as st
-from api_service import fetch_catalog_metadata
+from api_service import fetch_catalog_metadata, ApiService
 from PIL import Image
 
-from common import books_grid, process_ratings_and_update, service
+from common import books_grid, process_ratings_and_update
+
+service = ApiService()
+
 
 # -------------------------------------------------------------
 # TEMA PADRÃO (BRANCO + VERMELHO)
@@ -16,6 +19,7 @@ PRIMARY_RED = "#d90429"  # vermelho principal
 PRIMARY_COLOR = "#6e04d9"
 SIDEBAR_BG = "#f5f5f5"  # sidebar branca
 SIDEBAR_HIGHLIGHT = "#ef233c"  # vermelho hover
+WARNING = "#d68d26ca"
 
 st.set_page_config(
     page_title="Bookstation - Recomendações",
@@ -45,21 +49,43 @@ st.markdown(
     }}
 
     [data-testid="stSidebarNavLink"]:hover {{
-        background-color: {SIDEBAR_HIGHLIGHT}33;
+        background-color: {SIDEBAR_HIGHLIGHT};
     }}
     [data-testid="stSidebarNavLink"]:hover {{
-        background-color: {SIDEBAR_HIGHLIGHT}33;
+        background-color: {SIDEBAR_HIGHLIGHT};
     }}
-    .stButton>button {{
+
+    .stButton > button {{
         background-color: {PRIMARY_RED} !important;
         color: white !important;
         border-radius: 6px !important;
     }}
+
+    .stFormSubmitButton button {{
+        background-color: {PRIMARY_RED} !important;
+        color: white !important;
+        border-radius: 6px !important;
+    }}
+
+    .stFormSubmitButton button:hover, .stButton > button:hover {{
+        background-color: {SIDEBAR_HIGHLIGHT} !important;
+    }}
+
     h1, h2, h3, h4 {{
         color: {PRIMARY_RED};
     }}
     hr {{
         border-top: 2px solid {PRIMARY_RED};
+    }}
+
+    [data-testid="stButtonGroup"] button {{
+        background-color: {SIDEBAR_BG} !important;
+    }}
+
+    .stAlert div[data-testid="stAlertContainer"] {{
+        background-color: {WARNING} !important;
+        color: {TEXT_COLOR} !important; 
+        border-left: 5px solid {TEXT_COLOR} !important; 
     }}
     </style>
     """,
@@ -131,7 +157,10 @@ if st.session_state.user_id is not None:
     current_user = st.session_state.user_id
     st.sidebar.success(f"Usuário Ativo: **{current_user}**")
 
-    st.header(f"2. Recomendações de Livros ({N_RECOMMEND} itens)")
+    recs = st.session_state.recommendations
+    st.header(
+        f"Livros sugeridos ({len(recs)}/{N_RECOMMEND} dos livros combinam com o seu perfil)"
+    )
     if st.session_state.rating_queue:
         st.error(
             f"⚠️ {len(st.session_state.rating_queue)} avaliações pendentes. Clique em Atualizar!"
@@ -145,8 +174,6 @@ if st.session_state.user_id is not None:
         "🔄 Atualizar Recomendações", type="primary"
     ):  # Agora este botão processa o batch
         process_ratings_and_update(current_user, N_RECOMMEND)
-
-    recs = st.session_state.recommendations
 
     if recs:
         books_grid(recs)
